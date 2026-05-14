@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Package, Shield, Plus, List, LayoutDashboard, FileSearch, AlertCircle, Edit3, X } from 'lucide-react';
+import { Package, Shield, Plus, List, LayoutDashboard, FileSearch, AlertCircle, Edit3 } from 'lucide-react';
 import AdminClaims from '../components/AdminClaims'; 
 
 // --- HELPER COMPONENTS ---

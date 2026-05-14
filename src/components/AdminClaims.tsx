@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../api'; // Using the global axios instance we created
-import { FileSearch, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { FileSearch, CheckCircle, XCircle } from 'lucide-react';
 
 const AdminClaims = () => {
   const [claims, setClaims] = useState<any[]>([]);

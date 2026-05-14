@@ -1,5 +1,4 @@
-import React from 'react';
-import { Shield, Car, Heart, Home as HomeIcon, Eye, Target } from 'lucide-react';
+import { Car, Heart, Home as HomeIcon, Eye, Target } from 'lucide-react';
 
 const Home = () => {
   return (

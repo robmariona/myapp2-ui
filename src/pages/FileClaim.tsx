@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { Send, AlertTriangle, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Send, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const FileClaim = () => {
