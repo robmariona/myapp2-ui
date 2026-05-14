@@ -4,7 +4,6 @@ import { FileSearch, CheckCircle, XCircle } from 'lucide-react';
 
 const AdminClaims = () => {
   const [claims, setClaims] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchClaims();
@@ -17,7 +16,6 @@ const AdminClaims = () => {
     } catch (err) {
       console.error("Error fetching claims", err);
     } finally {
-      setLoading(false);
     }
   };
 
