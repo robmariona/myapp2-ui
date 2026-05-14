@@ -1,0 +1,12 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Tests folder
+Tests/
+tests/
+
+# Dependencies
+node_modules/
+dist/
