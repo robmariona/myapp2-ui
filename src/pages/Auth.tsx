@@ -14,7 +14,7 @@ const Auth = () => {
     setStatus({ type: '', msg: '' });
 
     const endpoint = isLogin ? 'login' : 'register';
-    const apiUrl = `https://localhost:44331/api/Auth/${endpoint}`;
+    const apiUrl = `${import.meta.env.VITE_API_URL}/Auth/${endpoint}`;
 
     try {
       const res = await axios.post(apiUrl, formData);
