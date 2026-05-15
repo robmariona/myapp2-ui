@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Package, Shield, Plus, List, LayoutDashboard, FileSearch, AlertCircle, Edit3 } from 'lucide-react';
-import AdminClaims from '../components/AdminClaims'; 
+import AdminClaims from '../components/AdminClaims';
+import { Toaster, toast } from 'react-hot-toast';
 
 // --- HELPER COMPONENTS ---
 
-const ProductsTable = ({ products, onEdit, onDelete }: { 
-  products: any[], 
+const ProductsTable = ({ products, onEdit, onDelete }: {
+  products: any[],
   onEdit: (p: any) => void,
   onDelete: (product: any) => void
 }) => (
@@ -24,9 +25,9 @@ const ProductsTable = ({ products, onEdit, onDelete }: {
         <tr key={item.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
           <td className="py-4 font-medium">{item.nombre}</td>
           <td className="py-4">
-             <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full font-semibold">
-                {item.category || 'General'}
-             </span>
+            <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full font-semibold">
+              {item.category || 'General'}
+            </span>
           </td>
           <td className="py-4">${item.price}</td>
           <td className="py-4 text-right">
@@ -85,15 +86,15 @@ const InsuranceReportView = ({ data }: { data: any }) => (
       </div>
     </div>
     <div className="mt-4">
-       <h4 className="font-bold mb-2">Policy Breakdown</h4>
-       <ul className="text-sm space-y-2">
-         {data?.topInsurances?.map((ins: any, index: number) => (
-           <li key={index} className="flex justify-between border-b pb-1">
-             <span>{ins.productName} ({ins.policyName})</span>
-             <span className="font-mono">${ins.premium}</span>
-           </li>
-         ))}
-       </ul>
+      <h4 className="font-bold mb-2">Policy Breakdown</h4>
+      <ul className="text-sm space-y-2">
+        {data?.topInsurances?.map((ins: any, index: number) => (
+          <li key={index} className="flex justify-between border-b pb-1">
+            <span>{ins.productName} ({ins.policyName})</span>
+            <span className="font-mono">${ins.premium}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   </div>
 );
@@ -125,25 +126,34 @@ const Dashboard = () => {
       const pRes = await axios.get(`${API_BASE}/Products`, { headers });
       const iRes = await axios.get(`${API_BASE}/Insurances`, { headers });
       const rRes = await axios.get(`${API_BASE}/Insurances/report`, { headers });
-      
+
       setProducts(pRes.data);
       setInsurances(iRes.data);
       setReportData(rRes.data);
-    } catch (err: any) { 
-      setError("Could not connect to server.");
+    } catch (err: any) {
+      toast.error("Could not sync with the server.");
     }
   };
 
   const deleteProduct = async (product: any) => {
     const productId = product.id || product.Id;
     const hasInsurances = product.hasInsurances || product.HasInsurances;
-    if (!productId) return;
-    const warning = hasInsurances ? "Product has policies. Delete all?" : "Delete product?";
-    if (!window.confirm(warning)) return;
-    try {
-      await axios.delete(`${API_BASE}/Products/${productId}`, { headers });
-      fetchData();
-    } catch (err) { setError("Delete failed."); }
+
+    const message = hasInsurances
+      ? "This product has active policies. Are you sure you want to delete everything?"
+      : "Delete this product?";
+
+    // Keep the confirm for now (until you build a Modal), 
+    // but use Toasts for the result:
+    if (window.confirm(message)) {
+      try {
+        await axios.delete(`${API_BASE}/Products/${productId}`, { headers });
+        toast.success("Product deleted successfully!");
+        fetchData();
+      } catch (err) {
+        toast.error("Failed to delete product.");
+      }
+    }
   };
 
   const handleEditClick = (product: any) => {
@@ -158,13 +168,23 @@ const Dashboard = () => {
   };
 
   const submitProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingProductId) await axios.put(`${API_BASE}/Products/${editingProductId}`, newProduct, { headers });
-      else await axios.post(`${API_BASE}/Products`, newProduct, { headers });
-      fetchData(); cancelEdit();
-    } catch (err) { setError("Failed to save product."); }
-  };
+  e.preventDefault();
+  const loadingToast = toast.loading(editingProductId ? "Updating..." : "Saving...");
+  
+  try {
+    if (editingProductId) {
+      await axios.put(`${API_BASE}/Products/${editingProductId}`, newProduct, { headers });
+      toast.success("Product updated!", { id: loadingToast });
+    } else {
+      await axios.post(`${API_BASE}/Products`, newProduct, { headers });
+      toast.success("Product created!", { id: loadingToast });
+    }
+    fetchData(); 
+    cancelEdit();
+  } catch (err) { 
+    toast.error("Error saving product.", { id: loadingToast }); 
+  }
+};
 
   const addPolicy = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,6 +198,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans">
+      <Toaster position="top-right" />
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -216,25 +237,25 @@ const Dashboard = () => {
             </h2>
             {activeTab === 'products' ? (
               <form onSubmit={submitProduct} className="space-y-4">
-                <input required placeholder="Name" className="w-full p-2 border rounded" value={newProduct.nombre} onChange={e => setNewProduct({...newProduct, nombre: e.target.value})} />
-                <input required placeholder="Description" className="w-full p-2 border rounded" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} />
-                <input required type="number" placeholder="Price" className="w-full p-2 border rounded" value={newProduct.price || ''} onChange={e => setNewProduct({...newProduct, price: parseFloat(e.target.value)})} />
-                <select className="w-full p-2 border rounded" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}>
-                    <option value="General">General</option>
-                    <option value="Vehicle">Vehicle</option>
-                    <option value="Property">Property</option>
+                <input required placeholder="Name" className="w-full p-2 border rounded" value={newProduct.nombre} onChange={e => setNewProduct({ ...newProduct, nombre: e.target.value })} />
+                <input required placeholder="Description" className="w-full p-2 border rounded" value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
+                <input required type="number" placeholder="Price" className="w-full p-2 border rounded" value={newProduct.price || ''} onChange={e => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })} />
+                <select className="w-full p-2 border rounded" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}>
+                  <option value="General">General</option>
+                  <option value="Vehicle">Vehicle</option>
+                  <option value="Property">Property</option>
                 </select>
                 <button className={`w-full py-2 rounded font-bold text-white ${editingProductId ? 'bg-orange-500' : 'bg-gray-900'}`}>
-                    {editingProductId ? 'Update Product' : 'Save Product'}
+                  {editingProductId ? 'Update Product' : 'Save Product'}
                 </button>
               </form>
             ) : (
               <form onSubmit={addPolicy} className="space-y-4">
-                <select required className="w-full p-2 border rounded" value={newPolicy.productId} onChange={e => setNewPolicy({...newPolicy, productId: parseInt(e.target.value)})}>
+                <select required className="w-full p-2 border rounded" value={newPolicy.productId} onChange={e => setNewPolicy({ ...newPolicy, productId: parseInt(e.target.value) })}>
                   <option value="0">Select Product</option>
                   {products.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
-                <input required type="number" placeholder="Coverage Amount" className="w-full p-2 border rounded" value={newPolicy.coverageAmount || ''} onChange={e => setNewPolicy({...newPolicy, coverageAmount: parseFloat(e.target.value) || 0})} />
+                <input required type="number" placeholder="Coverage Amount" className="w-full p-2 border rounded" value={newPolicy.coverageAmount || ''} onChange={e => setNewPolicy({ ...newPolicy, coverageAmount: parseFloat(e.target.value) || 0 })} />
                 <button className="w-full bg-gray-900 text-white py-2 rounded font-bold">Save Policy</button>
               </form>
             )}
