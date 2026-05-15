@@ -10,7 +10,7 @@ const ClaimForm = () => {
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const API_BASE = 'https://localhost:44331/api';
+    const API_BASE = `${import.meta.env.VITE_API_URL}`;
     const token = localStorage.getItem('token');
     const headers = { 
         Authorization: `Bearer ${token}`,
