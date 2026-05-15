@@ -5,8 +5,7 @@ import AdminClaims from '../components/AdminClaims';
 import { Toaster, toast } from 'react-hot-toast';
 
 // --- HELPER COMPONENTS ---
-const [showDeleteModal, setShowDeleteModal] = useState(false);
-const [productToDelete, setProductToDelete] = useState<any>(null);
+
 
 const ProductsTable = ({ products, onEdit, onDelete }: {
   products: any[],
@@ -107,6 +106,8 @@ const InsuranceReportView = ({ data }: { data: any }) => (
 // --- MAIN DASHBOARD ---
 
 const Dashboard = () => {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'products' | 'policies' | 'claims' | 'report'>('products');
   const [products, setProducts] = useState<any[]>([]);
   const [insurances, setInsurances] = useState<any[]>([]);
@@ -271,7 +272,7 @@ const Dashboard = () => {
             <h2 className="text-xl font-bold mb-6">
               {activeTab === 'report' ? 'Insurance Analytics' : `Existing ${activeTab}`}
             </h2>
-            {activeTab === 'products' && <ProductsTable products={products} onEdit={handleEditClick} onDelete={handleDeleteClick} />}
+            {activeTab === 'products' && <ProductsTable products={products} onEdit={handleEditClick} onDelete={handleDeleteClick}/>}
             {activeTab === 'policies' && <PoliciesTable insurances={insurances} />}
             {activeTab === 'claims' && <AdminClaims />}
             {activeTab === 'report' && <InsuranceReportView data={reportData} />}
