@@ -5,6 +5,8 @@ import AdminClaims from '../components/AdminClaims';
 import { Toaster, toast } from 'react-hot-toast';
 
 // --- HELPER COMPONENTS ---
+const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [productToDelete, setProductToDelete] = useState<any>(null);
 
 const ProductsTable = ({ products, onEdit, onDelete }: {
   products: any[],
@@ -35,7 +37,10 @@ const ProductsTable = ({ products, onEdit, onDelete }: {
               <button onClick={() => onEdit(item)} className="text-praxent-blue hover:underline font-semibold flex items-center gap-1">
                 <Edit3 size={14} /> Edit
               </button>
-              <button onClick={() => onDelete(item)} className="text-red-500 hover:text-red-700">
+              <button
+                onClick={() => onDelete(item)} // This now calls handleDeleteClick
+                className="text-red-500 hover:text-red-700 flex items-center gap-1 font-semibold"
+              >
                 <AlertCircle size={14} /> Delete
               </button>
             </div>
@@ -135,24 +140,24 @@ const Dashboard = () => {
     }
   };
 
-  const deleteProduct = async (product: any) => {
-    const productId = product.id || product.Id;
-    const hasInsurances = product.hasInsurances || product.HasInsurances;
+  const handleDeleteClick = (product: any) => {
+    setProductToDelete(product);
+    setShowDeleteModal(true);
+  };
 
-    const message = hasInsurances
-      ? "This product has active policies. Are you sure you want to delete everything?"
-      : "Delete this product?";
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
 
-    // Keep the confirm for now (until you build a Modal), 
-    // but use Toasts for the result:
-    if (window.confirm(message)) {
-      try {
-        await axios.delete(`${API_BASE}/Products/${productId}`, { headers });
-        toast.success("Product deleted successfully!");
-        fetchData();
-      } catch (err) {
-        toast.error("Failed to delete product.");
-      }
+    const productId = productToDelete.id || productToDelete.Id;
+    const loadingToast = toast.loading("Deleting product and related policies...");
+
+    try {
+      await axios.delete(`${API_BASE}/Products/${productId}`, { headers });
+      toast.success("Product and policies deleted.", { id: loadingToast });
+      setShowDeleteModal(false);
+      fetchData();
+    } catch (err) {
+      toast.error("Delete failed.", { id: loadingToast });
     }
   };
 
@@ -168,23 +173,23 @@ const Dashboard = () => {
   };
 
   const submitProduct = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const loadingToast = toast.loading(editingProductId ? "Updating..." : "Saving...");
-  
-  try {
-    if (editingProductId) {
-      await axios.put(`${API_BASE}/Products/${editingProductId}`, newProduct, { headers });
-      toast.success("Product updated!", { id: loadingToast });
-    } else {
-      await axios.post(`${API_BASE}/Products`, newProduct, { headers });
-      toast.success("Product created!", { id: loadingToast });
+    e.preventDefault();
+    const loadingToast = toast.loading(editingProductId ? "Updating..." : "Saving...");
+
+    try {
+      if (editingProductId) {
+        await axios.put(`${API_BASE}/Products/${editingProductId}`, newProduct, { headers });
+        toast.success("Product updated!", { id: loadingToast });
+      } else {
+        await axios.post(`${API_BASE}/Products`, newProduct, { headers });
+        toast.success("Product created!", { id: loadingToast });
+      }
+      fetchData();
+      cancelEdit();
+    } catch (err) {
+      toast.error("Error saving product.", { id: loadingToast });
     }
-    fetchData(); 
-    cancelEdit();
-  } catch (err) { 
-    toast.error("Error saving product.", { id: loadingToast }); 
-  }
-};
+  };
 
   const addPolicy = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,13 +271,44 @@ const Dashboard = () => {
             <h2 className="text-xl font-bold mb-6">
               {activeTab === 'report' ? 'Insurance Analytics' : `Existing ${activeTab}`}
             </h2>
-            {activeTab === 'products' && <ProductsTable products={products} onEdit={handleEditClick} onDelete={deleteProduct} />}
+            {activeTab === 'products' && <ProductsTable products={products} onEdit={handleEditClick} onDelete={handleDeleteClick} />}
             {activeTab === 'policies' && <PoliciesTable insurances={insurances} />}
             {activeTab === 'claims' && <AdminClaims />}
             {activeTab === 'report' && <InsuranceReportView data={reportData} />}
           </div>
         </div>
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <AlertCircle size={28} />
+              <h3 className="text-xl font-bold">Confirm Deletion</h3>
+            </div>
+
+            <p className="text-gray-600 mb-6">
+              The product <span className="font-bold text-gray-900">"{productToDelete?.nombre}"</span> has active policies.
+              Deleting it will remove all associated data. This action cannot be undone.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              >
+                Yes, Delete Everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
