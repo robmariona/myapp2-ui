@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Package, Shield, Plus, List, LayoutDashboard, FileSearch, AlertCircle, Edit3 } from 'lucide-react';
 import AdminClaims from '../components/AdminClaims'; 
+import api from '../api';
 
 // --- HELPER COMPONENTS ---
 
@@ -113,7 +114,7 @@ const Dashboard = () => {
 
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
-  const API_BASE = 'https://localhost:44331/api';
+  const API_BASE = api;
 
   useEffect(() => {
     fetchData();
